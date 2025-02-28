@@ -106,6 +106,18 @@ def find_closest_question(query, faiss_index, df):
         return df.iloc[I[0][0]]['answer']  # Return the closest answer
     return None
 
+# Function to generate a better answer using Gemini
+def generate_better_answer(query, retrieved_answer):
+    prompt = f"""You are an income tax expert. Provide a detailed and user-friendly response to the following question:
+    Question: {query}
+    Retrieved Answer: {retrieved_answer}
+    - Explain the answer in simple terms.
+    - Add context or examples if necessary.
+    - Ensure the response is grammatically correct and engaging.
+    """
+    response = gemini.generate_content(prompt)
+    return response.text
+
 # Function to generate a response for out-of-scope questions using Gemini
 def generate_out_of_scope_response():
     prompt = """You are an income tax expert. Respond to the following question in a friendly and conversational tone:
@@ -131,7 +143,9 @@ if prompt := st.chat_input("Ask me anything about income tax..."):
             # Find the closest answer
             retrieved_answer = find_closest_question(prompt, faiss_index, df)
             if retrieved_answer:
-                response = f"**Income Tax Expert**:\n{retrieved_answer}"
+                # Generate a better answer using Gemini
+                better_answer = generate_better_answer(prompt, retrieved_answer)
+                response = f"**Income Tax Expert**:\n{better_answer}"
             else:
                 # Use Gemini for out-of-scope questions
                 response = generate_out_of_scope_response()
